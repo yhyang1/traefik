@@ -143,6 +143,21 @@ func TestConcurrentConfigurationUpdates(t *testing.T) {
 	wg.Wait()
 }
 
+func TestUnconfiguredEntryPoint(t *testing.T) {
+	for name, ep := range map[string]*EntryPoint{
+		"zero value": {},
+		"new server": NewServer().GetEntryPoint("web"),
+	} {
+		t.Run(name, func(t *testing.T) {
+			rec := httptest.NewRecorder()
+			ep.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/test", nil))
+			if rec.Code != http.StatusNotFound {
+				t.Fatalf("got status %d, want 404", rec.Code)
+			}
+		})
+	}
+}
+
 func TestConfigurationSnapshotIsImmutable(t *testing.T) {
 	s := NewServer()
 	config := Configuration{

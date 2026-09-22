@@ -36,6 +36,10 @@ type EntryPoint struct {
 }
 
 func (e *EntryPoint) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if e.snapshot == nil {
+		http.Error(w, "Not Found", http.StatusNotFound)
+		return
+	}
 	snapshot := e.snapshot.Load()
 	if snapshot == nil {
 		http.Error(w, "Not Found", http.StatusNotFound)
@@ -78,6 +82,9 @@ func (s *Server) watcher(ctx context.Context) {
 	}
 }
 
+// GetConfigurationChan returns the queue for complete configuration snapshots.
+// Senders must treat submitted maps as immutable: a buffered send can return
+// before the watcher has copied the maps. Build fresh maps for each update.
 func (s *Server) GetConfigurationChan() chan<- Configuration {
 	return s.configurationChan
 }
